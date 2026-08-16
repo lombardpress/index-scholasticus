@@ -8,6 +8,7 @@
     "build": "npm run build:data && next build",
     "start": "next start",
     "lint": "next lint",
+    "deploy": "npx --yes gh-pages -d out --dotfiles -b gh-pages",
     "tarout": "tar -czvf out.tgz out",
     "sync": "rsync -avzP --delete out/ jcwitt@facresearch09.ad.loyola.edu:/home/jcwitt/static-site-data/scta-index-scholasticus-data/"
   },
