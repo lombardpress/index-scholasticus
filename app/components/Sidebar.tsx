@@ -42,11 +42,17 @@ export default function Sidebar({
         <h1>
           <Link href={`/source/${sourceShortId}`}>{sourceTitle}</Link>
         </h1>
-        <p>
-          <Link href="/">Index Scholasticus</Link>
-          <Link href="https://lombardpress.org">A LombardPress Publication</Link>
-          <Link href="https://scta.info">Powered by SCTA Data</Link>
-        </p>
+        <div className="sidebar-credits">
+          <Link href="/" className="site-name">
+            Index Scholasticus
+          </Link>
+          <a className="credit" href="https://lombardpress.org" target="_blank" rel="noopener">
+            A LombardPress Publication
+          </a>
+          <a className="credit" href="https://scta.info" target="_blank" rel="noopener">
+            Powered by SCTA Data
+          </a>
+        </div>
       </div>
       <div id="sidebar-search">
         <input

@@ -169,6 +169,17 @@ a:hover{text-decoration:underline}
 .home-header{margin-bottom:8px}
 .home-header h1{font-family:var(--font-serif);font-size:28px;font-weight:normal;color:var(--text);letter-spacing:-.01em}
 .home-header p{color:var(--text-muted);font-size:14px;margin-top:6px}
+.home-header .home-tagline{margin-top:6px}
+/* Attribution credits (home + sidebar) */
+.site-credits{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--text-muted)}
+.site-credits .credit{color:var(--text-muted);text-decoration:none}
+.site-credits .credit:hover{color:var(--accent);text-decoration:underline}
+.site-credits-sep{opacity:.5}
+.sidebar-credits{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.sidebar-credits .site-name{font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--sidebar-text);text-decoration:none}
+.sidebar-credits .site-name:hover{color:#fff;text-decoration:none}
+.sidebar-credits .credit{font-size:10px;letter-spacing:.02em;color:var(--sidebar-muted);text-decoration:none}
+.sidebar-credits .credit:hover{color:var(--sidebar-text);text-decoration:underline}
 .home-stats{color:var(--text-muted);font-size:13px;margin:14px 0 28px;font-variant-numeric:tabular-nums}
 .source-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
 .source-card{display:block;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:16px 18px;transition:border-color .12s,box-shadow .12s;color:inherit}

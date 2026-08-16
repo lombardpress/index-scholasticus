@@ -21,8 +21,17 @@ export default function Home() {
     <main className="home">
       <div className="home-inner">
         <div className="home-header">
-          <h1>Citation Index</h1>
-          <p>SCTA Scholastic Corpus — browse which passages cite which source.</p>
+          <h1>Index Scholasticus</h1>
+          <p className="home-tagline">A citation index for the SCTA Scholastic Corpus</p>
+          <div className="site-credits">
+            <a className="credit" href="https://lombardpress.org" target="_blank" rel="noopener">
+              A LombardPress Publication
+            </a>
+            <span className="site-credits-sep">·</span>
+            <a className="credit" href="https://scta.info" target="_blank" rel="noopener">
+              Powered by SCTA Data
+            </a>
+          </div>
         </div>
         <div className="home-stats">
           {sources.length.toLocaleString()} sources ·{" "}
