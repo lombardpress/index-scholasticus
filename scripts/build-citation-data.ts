@@ -394,6 +394,8 @@ function main() {
   }
   console.log(`Found ${bySource.size} distinct sources`);
 
+  // Start clean so removed sources/books don't leave stale fragments behind.
+  fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
   const index: {
