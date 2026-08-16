@@ -5,6 +5,7 @@
   --accent:#2A5C3A; --accent-soft:#EAF3EC; --border:#E2DFD9;
   --badge-bg:#DAF0DD; --badge-text:#236633; --expand-bg:#F2F7F3;
   --cite-border:#C8DEC9; --author-bg:#EDFAED; --work-bg:#F5FBF5;
+  --match-bg:#C7ECC9; --match-text:#0F3417;
   --radius:3px;
   --font-serif:Georgia,"Times New Roman",serif;
   --font-ui:system-ui,-apple-system,sans-serif;
@@ -16,6 +17,7 @@
     --accent:#6DBF6D; --accent-soft:#1E2F1E; --border:#2A352A;
     --badge-bg:#1E3520; --badge-text:#6DBF6D; --expand-bg:#19251A;
     --cite-border:#2A402B; --author-bg:#1C2E1C; --work-bg:#192519;
+    --match-bg:#2E6B3B; --match-text:#EFF8F0;
   }
 }
 :root[data-theme="light"] {
@@ -23,6 +25,7 @@
   --accent:#2A5C3A; --accent-soft:#EAF3EC; --border:#E2DFD9;
   --badge-bg:#DAF0DD; --badge-text:#236633; --expand-bg:#F2F7F3;
   --cite-border:#C8DEC9; --author-bg:#EDFAED; --work-bg:#F5FBF5;
+  --match-bg:#C7ECC9; --match-text:#0F3417;
 }
 :root[data-theme="dark"] {
   --main-bg:#141814; --surface:#1C231C; --text:#E4EAE4; --text-muted:#7A8E7A;
@@ -186,4 +189,31 @@ a:hover{text-decoration:underline}
 .book-toc .toc-title{font-size:14px}
 .book-toc .toc-count{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;flex-shrink:0}
 
-.match{background-color: #00657e}
+.match{background-color:var(--match-bg);color:var(--match-text);border-radius:2px;padding:0 1px}
+
+/* ── Mobile: collapsible sidebar drawer ────────────────────────────────────── */
+.sidebar-toggle{display:none}
+.sidebar-scrim{display:none}
+@media (max-width:760px){
+  .sidebar-toggle{
+    display:flex;align-items:center;justify-content:center;
+    position:fixed;top:8px;left:8px;z-index:1100;
+    width:40px;height:40px;border-radius:var(--radius);
+    background:var(--sidebar-bg);color:var(--sidebar-text);
+    border:1px solid rgba(255,255,255,.15);box-shadow:0 2px 8px rgba(0,0,0,.3);
+    font-size:16px;line-height:1;
+  }
+  #sidebar{
+    position:fixed;top:0;left:0;z-index:1090;
+    width:min(82vw,300px);
+    transform:translateX(-100%);
+    transition:transform .2s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.45);
+  }
+  #sidebar.open{transform:translateX(0)}
+  .sidebar-scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1085}
+  /* keep top content clear of the fixed hamburger */
+  .cite-filter{padding-left:56px}
+  .source-overview{padding-top:52px}
+  .book-section-header{padding-left:56px}
+}

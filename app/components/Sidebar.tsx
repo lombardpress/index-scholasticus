@@ -24,16 +24,28 @@ export default function Sidebar({
   activeBookSlug?: string;
 }) {
   const [filter, setFilter] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const q = filter.toLowerCase();
 
   return (
-    <aside id="sidebar">
+    <>
+      <button
+        className="sidebar-toggle"
+        onClick={() => setMenuOpen((o) => !o)}
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+        aria-expanded={menuOpen}
+      >
+        {menuOpen ? "✕" : "☰"}
+      </button>
+      <aside id="sidebar" className={menuOpen ? "open" : ""}>
       <div id="sidebar-header">
         <h1>
           <Link href={`/source/${sourceShortId}`}>{sourceTitle}</Link>
         </h1>
         <p>
-          <Link href="/">SCTA Citation Index</Link>
+          <Link href="/">Index Scholasticus</Link>
+          <Link href="https://lombardpress.org">A LombardPress Publication</Link>
+          <Link href="https://scta.info">Powered by SCTA Data</Link>
         </p>
       </div>
       <div id="sidebar-search">
@@ -55,6 +67,7 @@ export default function Sidebar({
               href={`/source/${sourceShortId}/${book.slug}`}
               className={"book-link" + (active ? " active" : "")}
               style={hidden ? { display: "none" } : undefined}
+              onClick={() => setMenuOpen(false)}
             >
               <span className="book-name">{book.title}</span>
               <span className="book-count">{book.total}</span>
@@ -68,6 +81,10 @@ export default function Sidebar({
         </div>
         <ThemeToggle />
       </div>
-    </aside>
+      </aside>
+      {menuOpen && (
+        <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} />
+      )}
+    </>
   );
 }
