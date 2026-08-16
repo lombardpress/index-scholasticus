@@ -1,0 +1,31 @@
+{
+  "name": "scta-index-scholasticus",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:data": "NODE_OPTIONS=--max-old-space-size=8192 tsx scripts/build-citation-data.ts",
+    "dev": "next dev",
+    "build": "npm run build:data && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "tarout": "tar -czvf out.tgz out",
+    "sync": "rsync -avzP --delete out/ jcwitt@facresearch09.ad.loyola.edu:/home/jcwitt/static-site-data/scta-index-scholasticus-data/"
+  },
+  "dependencies": {
+    "next": "15.4.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.4.4",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,73 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import ThemeToggle from "./ThemeToggle";
+import type { BookMeta } from "./types";
+
+// Book navigation for a source. Each book is its own page, so book entries are
+// links (not scroll-to actions) and the active book is driven by the route.
+
+export default function Sidebar({
+  sourceShortId,
+  sourceTitle,
+  books,
+  totalPassages,
+  totalCitations,
+  activeBookSlug,
+}: {
+  sourceShortId: string;
+  sourceTitle: string;
+  books: BookMeta[];
+  totalPassages: number;
+  totalCitations: number;
+  activeBookSlug?: string;
+}) {
+  const [filter, setFilter] = useState("");
+  const q = filter.toLowerCase();
+
+  return (
+    <aside id="sidebar">
+      <div id="sidebar-header">
+        <h1>
+          <Link href={`/source/${sourceShortId}`}>{sourceTitle}</Link>
+        </h1>
+        <p>
+          <Link href="/">SCTA Citation Index</Link>
+        </p>
+      </div>
+      <div id="sidebar-search">
+        <input
+          type="search"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Filter…"
+          aria-label="Filter"
+        />
+      </div>
+      <div id="book-list">
+        {books.map((book) => {
+          const active = book.slug === activeBookSlug;
+          const hidden = q !== "" && !book.title.toLowerCase().includes(q);
+          return (
+            <Link
+              key={book.slug}
+              href={`/source/${sourceShortId}/${book.slug}`}
+              className={"book-link" + (active ? " active" : "")}
+              style={hidden ? { display: "none" } : undefined}
+            >
+              <span className="book-name">{book.title}</span>
+              <span className="book-count">{book.total}</span>
+            </Link>
+          );
+        })}
+      </div>
+      <div id="sidebar-footer">
+        <div id="stats">
+          {totalPassages.toLocaleString()} passages · {totalCitations.toLocaleString()} citations
+        </div>
+        <ThemeToggle />
+      </div>
+    </aside>
+  );
+}
