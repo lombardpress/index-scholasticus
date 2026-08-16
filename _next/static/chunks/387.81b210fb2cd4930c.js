@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[387],{387:(e,t,o)=>{o.r(t),o.d(t,{b:()=>r});let r=Object.freeze(Object.defineProperty({__proto__:null,default:(0,o(158).g)(function(){throw Error("ws does not work in the browser. Browser clients must use the native WebSocket object")})},Symbol.toStringTag,{value:"Module"}))}}]);
