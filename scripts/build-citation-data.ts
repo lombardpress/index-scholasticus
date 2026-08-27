@@ -18,7 +18,7 @@ import path from "path";
 const INPUT =
   process.argv[2] ||
   process.env.CITATION_INDEX ||
-  path.resolve(process.cwd(), "../scta-scikit/examples/citation_index.json");
+  "/Users/jcwitt/Projects/scta/scta-scikit/examples/citation_index.json";
 
 const OUT_DIR = path.resolve(process.cwd(), "app/data/citations");
 
