@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 function clearFilter(tree: HTMLElement) {
   tree
     .querySelectorAll<HTMLElement>(
-      ".cit-node,.verse-row,.author-group,.work-group,.div-group"
+      ".cit-node,.verse-row,.author-group,.work-group,.div-group,.citation-row"
     )
     .forEach((el) => {
       el.style.display = "";
@@ -32,49 +32,75 @@ function applyFilter(
     return null;
   }
 
-  const visible = new Set<Element>();
+  // Start from a fully collapsed tree, then reveal only matching branches.
+  tree
+    .querySelectorAll<HTMLElement>(
+      ".cit-node,.verse-row,.author-group,.work-group,.div-group,.citation-row"
+    )
+    .forEach((el) => {
+      el.style.display = "none";
+      el.classList.remove("open");
+    });
+
   const verses = new Set<Element>();
 
-  // Leaf decision: each work-group matches if its author + work title contain
-  // all the given tokens. Walk up to mark ancestor containers visible.
-  tree.querySelectorAll<HTMLElement>(".work-group").forEach((wg) => {
-    const workText = (wg.querySelector(".work-title")?.textContent || "").toLowerCase();
-    const ag = wg.closest(".author-group");
-    const authorText = (ag?.querySelector(".author-name")?.textContent || "").toLowerCase();
-    const match =
-      (aq === "" || authorText.includes(aq)) && (wq === "" || workText.includes(wq));
+  const authorTextFor = (el: Element) =>
+    (
+      el.closest(".author-group")?.querySelector(".author-name")?.textContent || ""
+    ).toLowerCase();
+  const isMatch = (authorText: string, otherText: string) =>
+    (aq === "" || authorText.includes(aq)) && (wq === "" || otherText.includes(wq));
 
-    wg.style.display = match ? "" : "none";
-    if (!match) {
-      wg.classList.remove("open");
-      return;
-    }
-    wg.classList.add("open");
-    // Reveal every citation under the matched work (open nested divisions).
-    wg.querySelectorAll(".div-group").forEach((d) => d.classList.add("open"));
-    let el: Element | null = wg.parentElement;
+  const reveal = (el: HTMLElement) => {
+    el.style.display = "";
+    el.classList.add("open");
+  };
+
+  // A matched work-group reveals its whole subtree — every nested division
+  // and citation row under it, regardless of that division's own text.
+  const revealSubtree = (root: HTMLElement) => {
+    reveal(root);
+    root
+      .querySelectorAll<HTMLElement>(".work-group,.div-group,.citation-row")
+      .forEach(reveal);
+  };
+
+  // Walk up from a matched leaf, opening every ancestor container on the way
+  // so the match is actually visible.
+  const revealAncestors = (leaf: Element) => {
+    let el: Element | null = leaf.parentElement;
     while (el && el !== tree) {
-      if (el.matches(".author-group,.verse-row,.cit-node")) {
-        visible.add(el);
+      if (el.matches(".author-group,.verse-row,.cit-node,.work-group,.div-group")) {
+        reveal(el as HTMLElement);
         if (el.matches(".verse-row")) verses.add(el);
       }
       el = el.parentElement;
     }
+  };
+
+  // A work-group only exists once its own subtree branches (a single-branch
+  // work collapses into a flat .citation-row instead) — matching on its
+  // title still makes sense as a coarser "show everything under this work"
+  // filter.
+  tree.querySelectorAll<HTMLElement>(".work-group").forEach((wg) => {
+    const workText = (wg.querySelector(".work-title")?.textContent || "").toLowerCase();
+    if (isMatch(authorTextFor(wg), workText)) {
+      revealSubtree(wg);
+      revealAncestors(wg);
+    }
   });
 
-  // Show only the containers on a path to a matching citation; open them so the
-  // matches are revealed. Hide the rest.
-  tree
-    .querySelectorAll<HTMLElement>(".author-group,.verse-row,.cit-node")
-    .forEach((el) => {
-      if (visible.has(el)) {
-        el.style.display = "";
-        el.classList.add("open");
-      } else {
-        el.style.display = "none";
-        el.classList.remove("open");
-      }
-    });
+  // A collapsed single-branch chain: match against the full citation path
+  // shown on its one remaining row (it already carries the work title and
+  // every division label along the way, so a "work title" search still
+  // finds it).
+  tree.querySelectorAll<HTMLElement>(".citation-row").forEach((row) => {
+    const pathText = (row.textContent || "").toLowerCase();
+    if (isMatch(authorTextFor(row), pathText)) {
+      reveal(row);
+      revealAncestors(row);
+    }
+  });
 
   return verses.size;
 }

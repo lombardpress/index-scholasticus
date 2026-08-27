@@ -291,25 +291,66 @@ function extLink(resourceUri: string, title: string): string {
   )}" target="_blank" rel="noopener" title="${esc(title)}">${EXT_ICON}</a>`;
 }
 
-function renderCiteTrie(paras: { uri: string }[], children: CiteTrieNode[], indent: number): string {
+function renderParaEntry(uri: string, indent: number): string {
+  return `<div class="para-entry" style="padding-left:${indent}px"><a class="para-uri" href="${esc(
+    uri
+  )}" target="_blank" rel="noopener" title="Click to view and compare with the source text">${esc(
+    uri
+  )}</a>${extLink(uri, "Open citing text in SCTA viewer")}</div>`;
+}
+
+function renderCitationRow(label: string, uri: string, indent: number): string {
+  return `<div class="citation-row" style="padding-left:${indent}px"><div class="citation-path">${esc(
+    label
+  )}</div><div class="citation-link"><a class="para-uri" href="${esc(
+    uri
+  )}" target="_blank" rel="noopener" title="Click to view and compare with the source text">${esc(
+    uri
+  )}</a>${extLink(uri, "Open citing text in SCTA viewer")}</div></div>`;
+}
+
+// Renders one node of the author/work/division chain, collapsing any run of
+// single-branch levels into a single row instead of a chain of nested
+// headers that each just repeat the same lone citation. A node's own label
+// (via CiteTrieNode.label / Work.title) already carries the full ancestor
+// path, so once a run of single-branch levels bottoms out — either at the
+// lone citing paragraph, or at the first real fork — we only need to render
+// that final node's label, not every intermediate one.
+function renderChain(
+  label: string,
+  paras: { uri: string }[],
+  children: CiteTrieNode[],
+  indent: number,
+  headerClass: "work-group" | "div-group"
+): string {
+  const branchCount = paras.length + children.length;
+
+  if (branchCount === 1 && paras.length === 1) {
+    return renderCitationRow(label, paras[0].uri, indent);
+  }
+  if (branchCount === 1 && children.length === 1) {
+    const only = children[0];
+    return renderChain(only.label, only.paras, only.children, indent, "div-group");
+  }
+
+  // Real fork: render one header for this level, with its own paras plus a
+  // recursively-collapsed row for each child branch.
+  const cnt = paras.length + children.reduce((s, c) => s + countCiteNode(c), 0);
+  let body = "";
+  for (const p of paras) body += renderParaEntry(p.uri, indent + 16);
+  for (const c of children) {
+    body += renderChain(c.label, c.paras, c.children, indent + 16, "div-group");
+  }
+  const short = headerClass === "work-group" ? "work" : "div";
+  const labelClass = short === "work" ? "work-title" : "div-label";
+  return `<div class="${headerClass}"><div class="${short}-header" style="padding:5px 12px 5px ${indent}px"><span class="${short}-toggle">►</span><span class="${labelClass}">${esc(
+    label
+  )}</span><span class="group-count">${cnt}</span></div><div class="${short}-body">${body}</div></div>`;
+}
+
+function renderWorksList(works: Work[], indent: number): string {
   let h = "";
-  for (const p of paras) {
-    h += `<div class="para-entry" style="padding-left:${indent}px"><a class="para-uri" href="${esc(
-      p.uri
-    )}" target="_blank" rel="noopener" title="Click to view and compare with the source text">${esc(
-      p.uri
-    )}</a>${extLink(p.uri, "Open citing text in SCTA viewer")}</div>`;
-  }
-  for (const child of children) {
-    const cnt = countCiteNode(child);
-    h += `<div class="div-group"><div class="div-header" style="padding:5px 12px 5px ${indent}px"><span class="div-toggle">►</span><span class="div-label">${esc(
-      child.label
-    )}</span><span class="group-count">${cnt}</span></div><div class="div-body">${renderCiteTrie(
-      child.paras,
-      child.children,
-      indent + 16
-    )}</div></div>`;
-  }
+  for (const w of works) h += renderChain(w.title, w.paras, w.children, indent, "work-group");
   return h;
 }
 
@@ -318,17 +359,10 @@ function renderGroups(groups: Group[]): string {
   for (const g of groups) {
     h += `<div class="author-group"><div class="author-header"><span class="author-toggle">►</span><span class="author-name">${esc(
       g.author
-    )}</span><span class="group-count">${g.count} citation${g.count !== 1 ? "s" : ""}</span></div><div class="author-body">`;
-    for (const w of g.works) {
-      h += `<div class="work-group"><div class="work-header"><span class="work-toggle">►</span><span class="work-title">${esc(
-        w.title
-      )}</span><span class="group-count">${w.count}</span></div><div class="work-body">${renderCiteTrie(
-        w.paras,
-        w.children,
-        40
-      )}</div></div>`;
-    }
-    h += `</div></div>`;
+    )}</span><span class="group-count">${g.count} citation${g.count !== 1 ? "s" : ""}</span></div><div class="author-body">${renderWorksList(
+      g.works,
+      40
+    )}</div></div>`;
   }
   return h;
 }
