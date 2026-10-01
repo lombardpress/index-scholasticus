@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import FilterBar, { useUrlFilter, type FilterDirection } from "./FilterBar";
 import type { BookMeta, Facets } from "./types";
+import { WORDING } from "./wording";
 
 // Book table of contents on a source/work overview page, with the same
 // author/work filter bar as the book pages. It filters against the precomputed
@@ -47,9 +48,7 @@ export default function BookToc({
 
   const shownBooks = matches ? matches.filter((n) => n > 0).length : books.length;
   const shownCites = matches ? matches.reduce((s, n) => s + n, 0) : 0;
-  const status = `${shownCites.toLocaleString()} citation${shownCites !== 1 ? "s" : ""} in ${shownBooks} book${
-    shownBooks !== 1 ? "s" : ""
-  }`;
+  const status = WORDING[direction].filterStatus(shownCites, shownBooks);
 
   return (
     <>
@@ -61,7 +60,7 @@ export default function BookToc({
             // don't redirect (and drop the query string).
             <Link key={b.slug} href={`${bookBase}/${b.slug}/${qs}`}>
               <span className="toc-title">{b.title}</span>
-              <span className="toc-count">
+              <span className="toc-count" title={WORDING[direction].timesLower(b.total)}>
                 {matches ? `${matches[i].toLocaleString()} / ` : ""}
                 {b.total.toLocaleString()}
               </span>

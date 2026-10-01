@@ -9,6 +9,7 @@ import CitationInteractions from "./CitationInteractions";
 import CitationFilter from "./CitationFilter";
 import SourceGrid from "./SourceGrid";
 import BookToc from "./BookToc";
+import { WORDING } from "./wording";
 import PageHeader from "./PageHeader";
 import {
   DIRECTIONS,
@@ -20,9 +21,9 @@ import {
   type Direction,
 } from "./data";
 
-const COPY: Record<Direction, { tab: string; crossLink: string }> = {
-  forward: { tab: "Cited sources", crossLink: "Cited by" },
-  reverse: { tab: "Citing works", crossLink: "Cites" },
+const COPY: Record<Direction, { tab: string }> = {
+  forward: { tab: "Cited sources" },
+  reverse: { tab: "Citing works" },
 };
 
 export function HomeView({ direction }: { direction: Direction }) {
@@ -61,11 +62,10 @@ export function HomeView({ direction }: { direction: Direction }) {
           ))}
         </nav>
         <div className="home-stats">
-          {sources.length.toLocaleString()} {noun} ·{" "}
-          {totalPassages.toLocaleString()} passages ·{" "}
-          {totalCitations.toLocaleString()} citations
+          {sources.length.toLocaleString()} {noun} · {WORDING[direction].homeTimes(totalCitations)} ·{" "}
+          {WORDING[direction].units(totalPassages)}
         </div>
-        <SourceGrid sources={sources} basePath={basePath} noun={noun} />
+        <SourceGrid direction={direction} sources={sources} basePath={basePath} noun={noun} />
       </div>
     </main>
   );
@@ -85,6 +85,7 @@ export function WorkOverview({ direction, work }: { direction: Direction; work: 
   return (
     <>
       <Sidebar
+        direction={direction}
         basePath={basePath}
         sourceShortId={meta.shortId}
         sourceTitle={meta.title}
@@ -99,14 +100,14 @@ export function WorkOverview({ direction, work }: { direction: Direction; work: 
             meta.author,
             COPY[direction].tab,
             n(meta.books.length, "book"),
-            n(meta.totalPassages, "passage"),
-            n(meta.totalCitations, "citation"),
+            WORDING[direction].timesLower(meta.totalCitations),
+            WORDING[direction].units(meta.totalPassages),
           ]}
         >
           {otherMeta && (
             <div className="page-cross">
               <Link href={`${DIRECTIONS[otherDir].basePath}/${work}/`}>
-                {COPY[otherDir].crossLink} {n(otherMeta.totalCitations, "citation")} →
+                {WORDING[otherDir].times(otherMeta.totalCitations)} →
               </Link>
             </div>
           )}
@@ -140,6 +141,7 @@ export function BookView({
   return (
     <>
       <Sidebar
+        direction={direction}
         basePath={basePath}
         sourceShortId={meta.shortId}
         sourceTitle={meta.title}
@@ -155,8 +157,8 @@ export function BookView({
           stats={[
             meta.author,
             COPY[direction].tab,
-            n(bookMeta.passages, "passage"),
-            n(bookMeta.total, "citation"),
+            WORDING[direction].timesLower(bookMeta.total),
+            WORDING[direction].units(bookMeta.passages),
           ]}
         />
         <CitationFilter targetId="citation-tree" direction={direction} />

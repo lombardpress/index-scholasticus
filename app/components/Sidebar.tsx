@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import type { BookMeta } from "./types";
+import { WORDING, type Direction } from "./wording";
 
 // Book navigation for a source. Each book is its own page, so book entries are
 // links (not scroll-to actions) and the active book is driven by the route.
 
 export default function Sidebar({
+  direction,
   basePath,
   sourceShortId,
   sourceTitle,
@@ -17,6 +19,7 @@ export default function Sidebar({
   totalCitations,
   activeBookSlug,
 }: {
+  direction: Direction;
   basePath: string; // "/source" (cited sources) or "/cites" (citing works)
   sourceShortId: string;
   sourceTitle: string;
@@ -85,7 +88,7 @@ export default function Sidebar({
       </div>
       <div id="sidebar-footer">
         <div id="stats">
-          {totalPassages.toLocaleString()} passages · {totalCitations.toLocaleString()} citations
+          {WORDING[direction].times(totalCitations)} · {WORDING[direction].units(totalPassages)}
         </div>
         <ThemeToggle />
       </div>

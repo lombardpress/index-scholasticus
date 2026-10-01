@@ -3,15 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { SourceIndexEntry } from "./types";
+import { WORDING, type Direction } from "./wording";
 
 // Home-page card grid with a single filter box matched (case-insensitive
 // substring) against each card's title, author and short id.
 
 export default function SourceGrid({
+  direction,
   sources,
   basePath,
   noun,
 }: {
+  direction: Direction;
   sources: SourceIndexEntry[];
   basePath: string;
   noun: string;
@@ -49,12 +52,8 @@ export default function SourceGrid({
             {s.author && <div className="source-author">{s.author}</div>}
             <div className="source-short">{s.shortId}</div>
             <div className="source-counts">
-              <span>
-                <b>{s.totalCitations.toLocaleString()}</b> citations
-              </span>
-              <span>
-                <b>{s.totalPassages.toLocaleString()}</b> passages
-              </span>
+              <b>{WORDING[direction].times(s.totalCitations)}</b>
+              <span>{WORDING[direction].units(s.totalPassages)}</span>
             </div>
           </Link>
         ))}

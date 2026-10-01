@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import FilterBar, { useUrlFilter, type FilterDirection } from "./FilterBar";
+import { WORDING } from "./wording";
 
 // Client-side filter for a book page. The citation tree is static HTML injected
 // into `#citation-tree`; here we filter it in place by the citing text's author
@@ -128,7 +129,7 @@ export default function CitationFilter({
     <FilterBar
       direction={direction}
       filter={filter}
-      status={count === null ? null : `${count} passage${count !== 1 ? "s" : ""}`}
+      status={count === null ? null : WORDING[direction].unitCount(count)}
     />
   );
 }
