@@ -9,6 +9,7 @@ import type { BookMeta } from "./types";
 // links (not scroll-to actions) and the active book is driven by the route.
 
 export default function Sidebar({
+  basePath,
   sourceShortId,
   sourceTitle,
   books,
@@ -16,6 +17,7 @@ export default function Sidebar({
   totalCitations,
   activeBookSlug,
 }: {
+  basePath: string; // "/source" (cited sources) or "/cites" (citing works)
   sourceShortId: string;
   sourceTitle: string;
   books: BookMeta[];
@@ -40,7 +42,7 @@ export default function Sidebar({
       <aside id="sidebar" className={menuOpen ? "open" : ""}>
       <div id="sidebar-header">
         <h1>
-          <Link href={`/source/${sourceShortId}`}>{sourceTitle}</Link>
+          <Link href={`${basePath}/${sourceShortId}`}>{sourceTitle}</Link>
         </h1>
         <div className="sidebar-credits">
           <Link href="/" className="site-name">
@@ -70,7 +72,7 @@ export default function Sidebar({
           return (
             <Link
               key={book.slug}
-              href={`/source/${sourceShortId}/${book.slug}`}
+              href={`${basePath}/${sourceShortId}/${book.slug}`}
               className={"book-link" + (active ? " active" : "")}
               style={hidden ? { display: "none" } : undefined}
               onClick={() => setMenuOpen(false)}

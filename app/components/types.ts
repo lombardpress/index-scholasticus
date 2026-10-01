@@ -23,7 +23,7 @@ export interface Group {
 export interface Leaf {
   id: string;
   shortId: string;
-  verseNum: string;
+  label: string;
   order: number;
   citeCount: number;
   groups: Group[];
@@ -45,6 +45,7 @@ export interface SourceIndexEntry {
   id: string;
   shortId: string;
   title: string;
+  author?: string;
   totalPassages: number;
   totalCitations: number;
 }

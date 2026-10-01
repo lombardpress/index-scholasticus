@@ -235,3 +235,10 @@ a:hover{text-decoration:underline}
   .source-overview{padding-top:52px}
   .book-section-header{padding-left:56px}
 }
+/* Home: switch between the two directions of the index */
+.home-tabs{display:flex;gap:4px;margin-top:22px;border-bottom:1px solid var(--border)}
+.home-tab{padding:8px 14px;font-size:14px;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.home-tab:hover{color:var(--text);text-decoration:none}
+.home-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.source-card .source-author{font-size:13px;color:var(--text-muted);margin-top:3px}
+.overview-cross{margin:-8px 0 18px;font-size:13px}

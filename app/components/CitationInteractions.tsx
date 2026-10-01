@@ -28,9 +28,17 @@ export default function CitationInteractions({ targetId }: { targetId: string })
       if (para) {
         e.preventDefault();
         const verse = para.closest(".verse-row") as HTMLElement | null;
-        const quoteId = para.getAttribute("href") || "";
-        const sourceId = verse?.dataset.sourceId || "";
-        const sourceLabel = verse?.dataset.sourceLabel || "";
+        const href = para.getAttribute("href") || "";
+        const rowId = verse?.dataset.sourceId || "";
+        // Forward trees list citing texts under each cited passage; reverse
+        // trees list cited passages under each citing paragraph. Either way the
+        // citing text goes on the left of the comparison.
+        const reverse = !!para.closest('[data-direction="reverse"]');
+        const quoteId = reverse ? rowId : href;
+        const sourceId = reverse ? href : rowId;
+        const sourceLabel = reverse
+          ? sourceId.split("/resource/")[1] || sourceId
+          : verse?.dataset.sourceLabel || "";
         if (quoteId && sourceId) setTarget({ quoteId, sourceId, sourceLabel });
         return;
       }

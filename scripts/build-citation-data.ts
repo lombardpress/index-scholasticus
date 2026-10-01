@@ -2,9 +2,12 @@
  * build-citation-data.ts
  *
  * Faithful Node/TS port of scta-scikit/examples/citation_list_to_html.py.
- * Reads the full citation_index.json (~110 MB) and emits one JSON file per
- * top-level source into app/data/citations/<shortId>.json, plus an index.json
- * describing every source (for the home page + sidebar totals).
+ * Reads the full citation_index.json (~110 MB) and emits, per top-level work, a
+ * <shortId>.meta.json plus one pre-rendered HTML fragment per book, and an
+ * index.json describing every work (for the home page + sidebar totals). It
+ * does this twice: forward (cited source → citing texts) into
+ * app/data/citations/, and reversed (citing work → cited passages) into
+ * app/data/cites/.
  *
  * Run under tsx with a raised heap:
  *   NODE_OPTIONS=--max-old-space-size=8192 tsx scripts/build-citation-data.ts [INPUT_JSON]
@@ -20,7 +23,16 @@ const INPUT =
   process.env.CITATION_INDEX ||
   "/Users/jcwitt/Projects/scta/scta-scikit/examples/citation_index.json";
 
-const OUT_DIR = path.resolve(process.cwd(), "app/data/citations");
+const DATA_DIR = path.resolve(process.cwd(), "app/data");
+
+// The index is built in both directions from the same edges:
+//  - "forward" (cited source → passage → citing texts) into app/data/citations/
+//  - "reverse" (citing work → paragraph → cited passages) into app/data/cites/
+type Direction = "forward" | "reverse";
+const OUT_DIRS: Record<Direction, string> = {
+  forward: path.join(DATA_DIR, "citations"),
+  reverse: path.join(DATA_DIR, "cites"),
+};
 
 // ── Raw shapes (subset of citation_index.json) ────────────────────────────────
 
@@ -62,7 +74,7 @@ interface Group {
 interface Leaf {
   id: string;
   shortId: string;
-  verseNum: string;
+  label: string;
   order: number;
   citeCount: number;
   groups: Group[];
@@ -159,7 +171,21 @@ function serializeCiteTrie(node: MutCite): CiteTrieNode[] {
 
 // ── Per-source build ──────────────────────────────────────────────────────────
 
-function buildSource(sourceEntries: [string, Entry][]): Book[] {
+// The group (top-level heading under each leaf) for one linked text: in the
+// forward index the citing author; in the reverse index the cited source's
+// title (cited sources rarely carry an author).
+function groupLabel(anc: Ancestor[], direction: Direction): string {
+  if (direction === "reverse") {
+    const top = anc[0];
+    const title = top?.longTitle || top?.id?.split("/").pop() || "Unknown source";
+    const author = top?.authorTitle || top?.author;
+    return author ? `${author}, ${title}` : title;
+  }
+  const authorAnc = anc.find((a) => a.authorTitle || a.author);
+  return authorAnc ? (authorAnc.authorTitle || authorAnc.author)! : "Unknown";
+}
+
+function buildSource(sourceEntries: [string, Entry][], direction: Direction): Book[] {
   const booksDict = new Map<string, MutBook>();
 
   for (const [uri, entry] of sourceEntries) {
@@ -185,10 +211,7 @@ function buildSource(sourceEntries: [string, Entry][]): Book[] {
     const authorWorkMap = new Map<string, Map<string, { uri: string; divs: string[] }[]>>();
     for (const p of entry.paragraphs) {
       const anc = p.ancestors;
-      const authorAnc = anc.find((a) => a.authorTitle || a.author);
-      const author = authorAnc
-        ? (authorAnc.authorTitle || authorAnc.author)!
-        : "Unknown";
+      const author = groupLabel(anc, direction);
       const workAnc = anc.find((a) => a.level === 2 && a.longTitle);
       const work = workAnc?.longTitle || "Unknown work";
       const divs = anc
@@ -223,12 +246,17 @@ function buildSource(sourceEntries: [string, Entry][]): Book[] {
     const leafNode = ca[ca.length - 1];
     const pathArr = ca.length > 2 ? ca.slice(2, ca.length - 1) : [];
     const sid = uri.split("/").pop() || uri;
-    const verseNum = sid.includes("_") ? sid.slice(sid.lastIndexOf("_") + 1) : sid;
+    // Forward leaves are cited passages ("v. 13"); reverse leaves are citing
+    // paragraphs, whose ids carry no meaningful number.
+    const label =
+      direction === "reverse"
+        ? "¶"
+        : `v. ${sid.includes("_") ? sid.slice(sid.lastIndexOf("_") + 1) : sid}`;
 
     const leaf: Leaf = {
       id: uri,
       shortId: sid,
-      verseNum,
+      label,
       order: leafNode.order || 9999,
       citeCount: entry.paragraphs.length,
       groups,
@@ -370,11 +398,12 @@ function renderGroups(groups: Group[]): string {
 function renderVerse(v: Leaf, headerIndent: number): string {
   return `<div class="verse-row" id="v-${safeId(v.id)}" data-source-id="${esc(
     v.id
-  )}" data-source-label="v. ${esc(v.verseNum)} (${esc(v.shortId)})"><div class="verse-header" style="padding:8px 8px 8px ${headerIndent}px"><span class="verse-toggle">►</span><span class="verse-label">v.&nbsp;${esc(
-    v.verseNum
+  )}" data-source-label="${esc(v.label)} (${esc(v.shortId)})"><div class="verse-header" style="padding:8px 8px 8px ${headerIndent}px"><span class="verse-toggle">►</span><span class="verse-label">${esc(v.label).replace(
+    " ",
+    "&nbsp;"
   )}<span class="verse-shortid">${esc(v.shortId)}</span></span><span class="verse-badge">${v.citeCount}</span>${extLink(
     v.id,
-    "Open source passage in SCTA viewer"
+    "Open passage in SCTA viewer"
   )}</div><div class="verse-cites">${renderGroups(v.groups)}</div></div>`;
 }
 
@@ -394,14 +423,127 @@ function renderCitationTrie(node: { paras: Leaf[]; children: CitationTrieNode[] 
   return h;
 }
 
-function renderBook(book: Book): string {
+function renderBook(book: Book, direction: Direction): string {
   const bt = countCitNode(book);
-  return `<section class="book-section" id="book-${safeId(book.id)}"><div class="book-section-header"><h2>${esc(
+  return `<section class="book-section" id="book-${safeId(book.id)}" data-direction="${direction}"><div class="book-section-header"><h2>${esc(
     book.title
   )}</h2><span class="book-total-badge">${bt} citation${bt !== 1 ? "s" : ""}</span></div>${renderCitationTrie(
     book,
     0
   )}</section>`;
+}
+
+// ── Reversal ──────────────────────────────────────────────────────────────────
+
+// Flip every edge: key the index by citing paragraph, whose "citation
+// ancestors" become its own ancestor chain and whose "paragraphs" become the
+// passages it cites (each carrying the cited passage's ancestor chain). The
+// result has the same shape as the forward index, so it runs through the same
+// build + render pipeline.
+function reverseIndex(citationIndex: Record<string, Entry>): Record<string, Entry> {
+  const reversed: Record<string, Entry> = {};
+  for (const [citedUri, entry] of Object.entries(citationIndex)) {
+    for (const p of entry.paragraphs) {
+      let r = reversed[p.para_block];
+      if (!r) {
+        r = { citation_ancestors: p.ancestors, paragraphs: [] };
+        reversed[p.para_block] = r;
+      }
+      r.paragraphs.push({ para_block: citedUri, ancestors: entry.citation_ancestors });
+    }
+  }
+  return reversed;
+}
+
+// ── Emit one direction ────────────────────────────────────────────────────────
+
+function emitIndex(citationIndex: Record<string, Entry>, direction: Direction): void {
+  const outDir = OUT_DIRS[direction];
+
+  // Group entries by their top-level source (ca[0].id).
+  const bySource = new Map<string, [string, Entry][]>();
+  const sourceTitles = new Map<string, string>();
+  const sourceAuthors = new Map<string, string>();
+  for (const [uri, entry] of Object.entries(citationIndex)) {
+    const ca = entry.citation_ancestors;
+    if (!ca || ca.length === 0) continue;
+    const srcId = ca[0].id;
+    if (!srcId) continue;
+    if (!bySource.has(srcId)) {
+      bySource.set(srcId, []);
+      sourceTitles.set(srcId, ca[0].longTitle || srcId.split("/").pop() || srcId);
+    }
+    // Citing works share generic titles ("Commentarius in libros
+    // Sententiarum"), so carry the author along to tell them apart.
+    const author = ca.find((a) => a.authorTitle || a.author);
+    if (author && !sourceAuthors.has(srcId)) {
+      sourceAuthors.set(srcId, (author.authorTitle || author.author)!);
+    }
+    bySource.get(srcId)!.push([uri, entry]);
+  }
+  console.log(`[${direction}] Found ${bySource.size} distinct top-level works`);
+
+  // Start clean so removed sources/books don't leave stale fragments behind.
+  fs.rmSync(outDir, { recursive: true, force: true });
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const index: {
+    id: string;
+    shortId: string;
+    title: string;
+    author?: string;
+    totalPassages: number;
+    totalCitations: number;
+  }[] = [];
+
+  for (const [srcId, entries] of bySource) {
+    const shortId = srcId.replace(/\/$/, "").split("/").pop() || srcId;
+    const books = buildSource(entries, direction);
+
+    const totalCitations = books.reduce((s, b) => s + countCitNode(b), 0);
+    const totalPassages = books.reduce((s, b) => s + countPassages(b), 0);
+    const title = sourceTitles.get(srcId) || shortId;
+    const author = sourceAuthors.get(srcId);
+
+    // Assign a URL-safe slug to each book (unique within the source) and
+    // pre-render each book to its own compact HTML fragment, so no single page
+    // ever carries the whole source. This keeps every page small as the corpus
+    // grows. <outDir>/<shortId>/<bookSlug>.html
+    const usedSlugs = new Map<string, number>();
+    const bookMetas = books.map((b) => {
+      const base = safeId(b.id.split("/").pop() || b.id) || "book";
+      const seen = usedSlugs.get(base) || 0;
+      const slug = seen === 0 ? base : `${base}-${seen + 1}`;
+      usedSlugs.set(base, seen + 1);
+      return { slug, id: b.id, title: b.title, total: countCitNode(b), book: b };
+    });
+
+    const srcDir = path.join(outDir, shortId);
+    fs.mkdirSync(srcDir, { recursive: true });
+    for (const bm of bookMetas) {
+      fs.writeFileSync(path.join(srcDir, `${bm.slug}.html`), renderBook(bm.book, direction));
+    }
+
+    const meta = {
+      id: srcId,
+      shortId,
+      title,
+      author,
+      totalPassages,
+      totalCitations,
+      books: bookMetas.map(({ slug, id, title: bt, total }) => ({ slug, id, title: bt, total })),
+    };
+    fs.writeFileSync(path.join(outDir, `${shortId}.meta.json`), JSON.stringify(meta));
+
+    index.push({ id: srcId, shortId, title, author, totalPassages, totalCitations });
+  }
+
+  // Sort index by citation count (desc) so the home page leads with the richest.
+  index.sort((a, b) => b.totalCitations - a.totalCitations);
+  fs.writeFileSync(path.join(outDir, "index.json"), JSON.stringify(index, null, 2));
+
+  const total = index.reduce((s, e) => s + e.totalCitations, 0);
+  console.log(`[${direction}] Wrote ${index.length} works (${total} citations) + index.json to ${outDir}`);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -412,79 +554,8 @@ function main() {
   const citationIndex: Record<string, Entry> = JSON.parse(raw);
   console.log(`Loaded ${Object.keys(citationIndex).length} entries`);
 
-  // Group entries by their top-level source (ca[0].id).
-  const bySource = new Map<string, [string, Entry][]>();
-  const sourceTitles = new Map<string, string>();
-  for (const [uri, entry] of Object.entries(citationIndex)) {
-    const ca = entry.citation_ancestors;
-    if (!ca || ca.length === 0) continue;
-    const srcId = ca[0].id;
-    if (!srcId) continue;
-    if (!bySource.has(srcId)) {
-      bySource.set(srcId, []);
-      sourceTitles.set(srcId, ca[0].longTitle || srcId.split("/").pop() || srcId);
-    }
-    bySource.get(srcId)!.push([uri, entry]);
-  }
-  console.log(`Found ${bySource.size} distinct sources`);
-
-  // Start clean so removed sources/books don't leave stale fragments behind.
-  fs.rmSync(OUT_DIR, { recursive: true, force: true });
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-
-  const index: {
-    id: string;
-    shortId: string;
-    title: string;
-    totalPassages: number;
-    totalCitations: number;
-  }[] = [];
-
-  for (const [srcId, entries] of bySource) {
-    const shortId = srcId.replace(/\/$/, "").split("/").pop() || srcId;
-    const books = buildSource(entries);
-
-    const totalCitations = books.reduce((s, b) => s + countCitNode(b), 0);
-    const totalPassages = books.reduce((s, b) => s + countPassages(b), 0);
-    const title = sourceTitles.get(srcId) || shortId;
-
-    // Assign a URL-safe slug to each book (unique within the source) and
-    // pre-render each book to its own compact HTML fragment, so no single page
-    // ever carries the whole source. This keeps every page small as the corpus
-    // grows. app/data/citations/<shortId>/<bookSlug>.html
-    const usedSlugs = new Map<string, number>();
-    const bookMetas = books.map((b) => {
-      const base = safeId(b.id.split("/").pop() || b.id) || "book";
-      const seen = usedSlugs.get(base) || 0;
-      const slug = seen === 0 ? base : `${base}-${seen + 1}`;
-      usedSlugs.set(base, seen + 1);
-      return { slug, id: b.id, title: b.title, total: countCitNode(b), book: b };
-    });
-
-    const srcDir = path.join(OUT_DIR, shortId);
-    fs.mkdirSync(srcDir, { recursive: true });
-    for (const bm of bookMetas) {
-      fs.writeFileSync(path.join(srcDir, `${bm.slug}.html`), renderBook(bm.book));
-    }
-
-    const meta = {
-      id: srcId,
-      shortId,
-      title,
-      totalPassages,
-      totalCitations,
-      books: bookMetas.map(({ slug, id, title: bt, total }) => ({ slug, id, title: bt, total })),
-    };
-    fs.writeFileSync(path.join(OUT_DIR, `${shortId}.meta.json`), JSON.stringify(meta));
-
-    index.push({ id: srcId, shortId, title, totalPassages, totalCitations });
-  }
-
-  // Sort index by citation count (desc) so the home page leads with the richest.
-  index.sort((a, b) => b.totalCitations - a.totalCitations);
-  fs.writeFileSync(path.join(OUT_DIR, "index.json"), JSON.stringify(index, null, 2));
-
-  console.log(`Wrote ${index.length} source files + index.json to ${OUT_DIR}`);
+  emitIndex(citationIndex, "forward");
+  emitIndex(reverseIndex(citationIndex), "reverse");
 }
 
 main();

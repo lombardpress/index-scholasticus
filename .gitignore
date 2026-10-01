@@ -34,4 +34,5 @@ next-env.d.ts
 
 # generated citation data (build artifact)
 /app/data/citations
+/app/data/cites
 out.tgz

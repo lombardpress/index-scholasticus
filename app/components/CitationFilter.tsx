@@ -105,7 +105,21 @@ function applyFilter(
   return verses.size;
 }
 
-export default function CitationFilter({ targetId }: { targetId: string }) {
+// In the reverse index the "author" level holds the cited source and the
+// "work" level the cited book, so only the wording changes.
+const LABELS = {
+  forward: { author: "by author…", work: "by work title…", authorAria: "Filter by citing author", workAria: "Filter by citing work title" },
+  reverse: { author: "by cited source…", work: "by cited book…", authorAria: "Filter by cited source", workAria: "Filter by cited book or division" },
+};
+
+export default function CitationFilter({
+  targetId,
+  direction = "forward",
+}: {
+  targetId: string;
+  direction?: "forward" | "reverse";
+}) {
+  const labels = LABELS[direction];
   const [author, setAuthor] = useState("");
   const [work, setWork] = useState("");
   const [count, setCount] = useState<number | null>(null);
@@ -124,17 +138,17 @@ export default function CitationFilter({ targetId }: { targetId: string }) {
       <span className="cite-filter-label">Filter citations</span>
       <input
         className="cite-filter-input"
-        placeholder="by author…"
+        placeholder={labels.author}
         value={author}
         onChange={(e) => setAuthor(e.target.value)}
-        aria-label="Filter by citing author"
+        aria-label={labels.authorAria}
       />
       <input
         className="cite-filter-input"
-        placeholder="by work title…"
+        placeholder={labels.work}
         value={work}
         onChange={(e) => setWork(e.target.value)}
-        aria-label="Filter by citing work title"
+        aria-label={labels.workAria}
       />
       {active && count !== null && (
         <span className="cite-filter-count">

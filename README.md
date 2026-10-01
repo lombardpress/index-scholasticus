@@ -3,6 +3,8 @@
 A statically-generated Next.js app that renders the SCTA citation index — for each
 cited *source* (Bible, Lombard's *Sententiae*, Augustine, etc.) it shows which
 passages are cited and, for each passage, which scholastic authors/works cite it.
+It also runs the other way: for each *citing* work (Summa Halensis, Aquinas'
+*Scriptum*, …) it shows each of its paragraphs and the passages that paragraph cites.
 
 It reproduces the views of `scta-scikit/examples/citation_list_to_html.py` as a
 fast, pre-rendered site.
@@ -17,11 +19,24 @@ fast, pre-rendered site.
   - `index.json` — every source + totals (home page).
   - `<source>.meta.json` — source title, totals, and its book list (sidebar/TOC).
   - `<source>/<book>.html` — a pre-rendered, compact HTML fragment **per book**.
-- **Pages** (App Router, `output: 'export'`):
-  - `/` — list of all sources.
-  - `/source/[source]` — source overview: sidebar + book table of contents.
-  - `/source/[source]/[book]` — one book's citations; the pre-rendered fragment is
-    injected via `dangerouslySetInnerHTML`.
+- **Reverse index** (`app/data/cites/`, same file layout): `reverseIndex()` flips
+  every edge, keying entries by citing paragraph (its own ancestor chain becomes
+  the trie path) with the passages it cites as children. The flipped data has the
+  same shape, so it goes through the same `buildSource` → `renderBook` pipeline.
+  In the reverse tree the "author" level is the cited source and the "work" level
+  is the cited book. Each fragment carries `data-direction="forward|reverse"`.
+  - Each direction drops edges whose *own* key side has fewer than two ancestors,
+    so the totals differ a little (forward ≈ 50.2k, reverse ≈ 52.7k citations).
+  - Coverage follows encoding. A work shows up as "citing" only once its own
+    quotations are encoded; e.g. Augustine's *De Trinitate* is cited about 2.4k
+    times but currently cites only 10 passages.
+- **Pages** (App Router, `output: 'export'`). Both directions share the views
+  in `app/components/views.tsx` and the data readers in `app/components/data.ts`:
+  - `/` — list of all cited sources; `/cites` — list of all citing works (tabs).
+  - `/source/[source]` and `/cites/[work]` — overview: sidebar + book table of
+    contents. A work that appears in both indexes links across to its other view.
+  - `/source/[source]/[book]` and `/cites/[work]/[book]` — one book's tree; the
+    pre-rendered fragment is injected via `dangerouslySetInnerHTML`.
 - **Why per-book pages?** The corpus grows (Bible verses expected to reach 100k+).
   One page per book keeps every page small and pre-baked (no async fetch, no
   client-side rendering needed) no matter how large the whole corpus becomes.
