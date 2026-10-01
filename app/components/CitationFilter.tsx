@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import FilterBar, { useUrlFilter, type FilterDirection } from "./FilterBar";
 
 // Client-side filter for a book page. The citation tree is static HTML injected
 // into `#citation-tree`; here we filter it in place by the citing text's author
@@ -105,42 +106,16 @@ function applyFilter(
   return verses.size;
 }
 
-// In the reverse index the "author" level holds the cited source and the
-// "work" level the cited book, so only the wording changes.
-export const LABELS = {
-  forward: { author: "by author…", work: "by work title…", authorAria: "Filter by citing author", workAria: "Filter by citing work title" },
-  reverse: { author: "by cited source…", work: "by cited book…", authorAria: "Filter by cited source", workAria: "Filter by cited book or division" },
-};
-
 export default function CitationFilter({
   targetId,
   direction = "forward",
 }: {
   targetId: string;
-  direction?: "forward" | "reverse";
+  direction?: FilterDirection;
 }) {
-  const labels = LABELS[direction];
-  const [author, setAuthor] = useState("");
-  const [work, setWork] = useState("");
+  const filter = useUrlFilter();
+  const { author, work } = filter;
   const [count, setCount] = useState<number | null>(null);
-
-  // The overview page links here with ?author=…&work=… prefilled; read them
-  // once on mount (a static export can't read search params at build time).
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setAuthor(params.get("author") || "");
-    setWork(params.get("work") || "");
-  }, []);
-
-  // Keep the URL in sync so a filtered view can be reloaded or shared.
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const set = (k: string, v: string) =>
-      v.trim() ? url.searchParams.set(k, v.trim()) : url.searchParams.delete(k);
-    set("author", author);
-    set("work", work);
-    if (url.href !== window.location.href) window.history.replaceState(null, "", url.href);
-  }, [author, work]);
 
   useEffect(() => {
     const tree = document.getElementById(targetId);
@@ -149,41 +124,11 @@ export default function CitationFilter({
     return () => clearTimeout(handle);
   }, [author, work, targetId]);
 
-  const active = author !== "" || work !== "";
-
   return (
-    <div className="cite-filter">
-      <span className="cite-filter-label">Filter citations</span>
-      <input
-        className="cite-filter-input"
-        placeholder={labels.author}
-        value={author}
-        onChange={(e) => setAuthor(e.target.value)}
-        aria-label={labels.authorAria}
-      />
-      <input
-        className="cite-filter-input"
-        placeholder={labels.work}
-        value={work}
-        onChange={(e) => setWork(e.target.value)}
-        aria-label={labels.workAria}
-      />
-      {active && count !== null && (
-        <span className="cite-filter-count">
-          {count} passage{count !== 1 ? "s" : ""}
-        </span>
-      )}
-      {active && (
-        <button
-          className="cite-filter-clear"
-          onClick={() => {
-            setAuthor("");
-            setWork("");
-          }}
-        >
-          Clear
-        </button>
-      )}
-    </div>
+    <FilterBar
+      direction={direction}
+      filter={filter}
+      status={count === null ? null : `${count} passage${count !== 1 ? "s" : ""}`}
+    />
   );
 }

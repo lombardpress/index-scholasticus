@@ -105,6 +105,12 @@ interface MutBook extends MutTrie {
   order: number;
 }
 
+// Some works have an empty top-level title, so their descendants' longTitles
+// come out as ", Liber primus". Drop that leading separator.
+function cleanTitle(t: string | null | undefined): string {
+  return (t || "").replace(/^(\s*,)+\s*/, "");
+}
+
 // ── Trie helpers (ports of the Python functions) ──────────────────────────────
 
 function insertCitationTrie(node: MutTrie, pathArr: Ancestor[], leaf: Leaf): void {
@@ -117,7 +123,7 @@ function insertCitationTrie(node: MutTrie, pathArr: Ancestor[], leaf: Leaf): voi
   let child = node.children.get(key);
   if (!child) {
     child = {
-      label: head.longTitle || key.split("/").pop() || "",
+      label: cleanTitle(head.longTitle) || key.split("/").pop() || "",
       order: head.order || 9999,
       paras: [],
       children: new Map(),
@@ -200,7 +206,7 @@ function buildSource(sourceEntries: [string, Entry][], direction: Direction): Bo
     if (!book) {
       book = {
         id: bookId,
-        title: bookNode.longTitle || bookId.split("/").pop() || "",
+        title: cleanTitle(bookNode.longTitle) || bookId.split("/").pop() || "",
         order: bookNode.order || 9999,
         paras: [],
         children: new Map(),
@@ -214,10 +220,10 @@ function buildSource(sourceEntries: [string, Entry][], direction: Direction): Bo
       const anc = p.ancestors;
       const author = groupLabel(anc, direction);
       const workAnc = anc.find((a) => a.level === 2 && a.longTitle);
-      const work = workAnc?.longTitle || "Unknown work";
+      const work = cleanTitle(workAnc?.longTitle) || "Unknown work";
       const divs = anc
         .filter((a) => (a.level ?? 0) >= 3 && a.longTitle)
-        .map((a) => a.longTitle as string);
+        .map((a) => cleanTitle(a.longTitle));
 
       if (!authorWorkMap.has(author)) authorWorkMap.set(author, new Map());
       const works = authorWorkMap.get(author)!;
@@ -476,11 +482,10 @@ function renderCitationTrie(node: { paras: Leaf[]; children: CitationTrieNode[] 
   return h;
 }
 
+// The book's title and totals are rendered by the page header (app/components
+// /PageHeader.tsx), shared with the overview page, so the fragment is the tree only.
 function renderBook(book: Book, direction: Direction): string {
-  const bt = countCitNode(book);
-  return `<section class="book-section" id="book-${safeId(book.id)}" data-direction="${direction}"><div class="book-section-header"><h2>${esc(
-    book.title
-  )}</h2><span class="book-total-badge">${bt} citation${bt !== 1 ? "s" : ""}</span></div>${renderCitationTrie(
+  return `<section class="book-section" id="book-${safeId(book.id)}" data-direction="${direction}">${renderCitationTrie(
     book,
     0
   )}</section>`;
@@ -568,7 +573,14 @@ function emitIndex(citationIndex: Record<string, Entry>, direction: Direction): 
       const seen = usedSlugs.get(base) || 0;
       const slug = seen === 0 ? base : `${base}-${seen + 1}`;
       usedSlugs.set(base, seen + 1);
-      return { slug, id: b.id, title: b.title, total: countCitNode(b), book: b };
+      return {
+        slug,
+        id: b.id,
+        title: b.title,
+        total: countCitNode(b),
+        passages: countPassages(b),
+        book: b,
+      };
     });
 
     const srcDir = path.join(outDir, shortId);
@@ -584,7 +596,7 @@ function emitIndex(citationIndex: Record<string, Entry>, direction: Direction): 
       author,
       totalPassages,
       totalCitations,
-      books: bookMetas.map(({ slug, id, title: bt, total }) => ({ slug, id, title: bt, total })),
+      books: bookMetas.map(({ book: _book, ...bm }) => bm),
     };
     fs.writeFileSync(path.join(outDir, `${shortId}.meta.json`), JSON.stringify(meta));
     fs.writeFileSync(path.join(outDir, `${shortId}.facets.json`), JSON.stringify(buildFacets(books)));

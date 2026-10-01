@@ -54,7 +54,8 @@ export interface BookMeta {
   slug: string;
   id: string;
   title: string;
-  total: number;
+  total: number; // citations
+  passages: number;
 }
 
 // Per-book citation counts by (author, work), for the overview-page filter.

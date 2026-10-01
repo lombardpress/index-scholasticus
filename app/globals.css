@@ -71,7 +71,6 @@ a:hover{text-decoration:underline}
 #main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 /* Book */
 .book-section{border-bottom:1px solid var(--border)}
-.book-section-header{display:flex;align-items:baseline;gap:12px;padding:20px 32px 14px;background:var(--main-bg);border-bottom:1px solid var(--border)}
 /* Citation filter bar (top of a book page) */
 .cite-filter{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 32px;background:var(--surface);border-bottom:1px solid var(--border)}
 .cite-filter-label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
@@ -80,8 +79,6 @@ a:hover{text-decoration:underline}
 .cite-filter-count{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
 .cite-filter-clear{font-size:12px;color:var(--accent);padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius)}
 .cite-filter-clear:hover{background:var(--accent-soft)}
-.book-section-header h2{font-family:var(--font-serif);font-size:20px;font-weight:normal;color:var(--text);letter-spacing:-.01em}
-.book-total-badge{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
 /* Cited-text trie nodes (intermediate levels) */
 .cit-node{border-bottom:1px solid var(--border)}
 .cit-node:last-child{border-bottom:none}
@@ -196,12 +193,15 @@ a:hover{text-decoration:underline}
 .source-card .source-counts{margin-top:12px;font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;display:flex;gap:14px}
 .source-card .source-counts b{color:var(--accent);font-weight:600}
 
+/* ── Page header (shared by source overview + book pages) ──────────────────── */
+.page-header{padding:22px 32px 16px;background:var(--main-bg)}
+.page-crumb{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.page-header h2{font-family:var(--font-serif);font-size:22px;font-weight:normal;color:var(--text);letter-spacing:-.01em}
+.page-stats{color:var(--text-muted);font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums}
+.page-cross{font-size:13px;margin-top:8px}
+
 /* ── Source overview (book table of contents) ──────────────────────────────── */
-.source-overview{padding:24px 32px 80px}
-.source-overview .overview-header{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
-.source-overview .overview-header h2{font-family:var(--font-serif);font-size:22px;font-weight:normal;color:var(--text)}
-.source-overview .overview-sub{color:var(--text-muted);font-size:13px;margin-bottom:20px;font-variant-numeric:tabular-nums}
-.book-toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.book-toc{padding:20px 32px 80px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
 .book-toc a{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--border);border-radius:5px;background:var(--surface);padding:11px 14px;color:var(--text);text-decoration:none;transition:border-color .12s}
 .book-toc a:hover{border-color:var(--accent);text-decoration:none}
 .book-toc .toc-title{font-size:14px}
@@ -232,8 +232,7 @@ a:hover{text-decoration:underline}
   .sidebar-scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1085}
   /* keep top content clear of the fixed hamburger */
   .cite-filter{padding-left:56px}
-  .source-overview{padding-top:52px}
-  .book-section-header{padding-left:56px}
+  .page-header{padding-top:56px}
 }
 /* Home: switch between the two directions of the index */
 .home-tabs{display:flex;gap:4px;margin-top:22px;border-bottom:1px solid var(--border)}
@@ -241,8 +240,6 @@ a:hover{text-decoration:underline}
 .home-tab:hover{color:var(--text);text-decoration:none}
 .home-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .source-card .source-author{font-size:13px;color:var(--text-muted);margin-top:3px}
-.overview-cross{margin:-8px 0 18px;font-size:13px}
 .home-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-12px 0 20px}
 .home-filter-input{flex:1;max-width:420px;font-size:14px;padding:7px 11px}
 .home-empty{color:var(--text-muted);font-size:14px}
-.toc-filter{margin:0 -32px 18px;padding-left:32px;padding-right:32px}

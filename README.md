@@ -37,6 +37,10 @@ fast, pre-rendered site.
     contents. A work that appears in both indexes links across to its other view.
   - `/source/[source]/[book]` and `/cites/[work]/[book]` — one book's tree; the
     pre-rendered fragment is injected via `dangerouslySetInnerHTML`.
+  - Overview and book pages share one header (`PageHeader`: title + stats at
+    that page's scope) and one author/work filter bar (`FilterBar`). The filter
+    state lives in the URL (`?author=…&work=…`), so a filter set on the overview
+    (which narrows the book list using `<source>.facets.json`) carries into the book.
 - **Why per-book pages?** The corpus grows (Bible verses expected to reach 100k+).
   One page per book keeps every page small and pre-baked (no async fetch, no
   client-side rendering needed) no matter how large the whole corpus becomes.

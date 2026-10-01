@@ -9,6 +9,7 @@ import CitationInteractions from "./CitationInteractions";
 import CitationFilter from "./CitationFilter";
 import SourceGrid from "./SourceGrid";
 import BookToc from "./BookToc";
+import PageHeader from "./PageHeader";
 import {
   DIRECTIONS,
   getBookFragment,
@@ -70,6 +71,8 @@ export function HomeView({ direction }: { direction: Direction }) {
   );
 }
 
+const n = (v: number, unit: string) => `${v.toLocaleString()} ${unit}${v !== 1 ? "s" : ""}`;
+
 export function WorkOverview({ direction, work }: { direction: Direction; work: string }) {
   const meta = getMeta(direction, work);
   if (!meta) notFound();
@@ -90,30 +93,30 @@ export function WorkOverview({ direction, work }: { direction: Direction; work: 
         totalCitations={meta.totalCitations}
       />
       <main id="main">
-        <div className="source-overview">
-          <div className="overview-header">
-            <h2>{meta.title}</h2>
-          </div>
-          <div className="overview-sub">
-            {meta.author && <>{meta.author} · </>}
-            {COPY[direction].tab} · {meta.books.length.toLocaleString()} books ·{" "}
-            {meta.totalPassages.toLocaleString()} passages ·{" "}
-            {meta.totalCitations.toLocaleString()} citations
-          </div>
+        <PageHeader
+          title={meta.title}
+          stats={[
+            meta.author,
+            COPY[direction].tab,
+            n(meta.books.length, "book"),
+            n(meta.totalPassages, "passage"),
+            n(meta.totalCitations, "citation"),
+          ]}
+        >
           {otherMeta && (
-            <div className="overview-cross">
-              <Link href={`${DIRECTIONS[otherDir].basePath}/${work}`}>
-                {COPY[otherDir].crossLink} {otherMeta.totalCitations.toLocaleString()} citations →
+            <div className="page-cross">
+              <Link href={`${DIRECTIONS[otherDir].basePath}/${work}/`}>
+                {COPY[otherDir].crossLink} {n(otherMeta.totalCitations, "citation")} →
               </Link>
             </div>
           )}
-          <BookToc
-            direction={direction}
-            bookBase={`${basePath}/${meta.shortId}`}
-            books={meta.books}
-            facets={getFacets(direction, work)}
-          />
-        </div>
+        </PageHeader>
+        <BookToc
+          direction={direction}
+          bookBase={`${basePath}/${meta.shortId}`}
+          books={meta.books}
+          facets={getFacets(direction, work)}
+        />
       </main>
     </>
   );
@@ -130,12 +133,14 @@ export function BookView({
 }) {
   const meta = getMeta(direction, work);
   const fragment = getBookFragment(direction, work, book);
-  if (!meta || fragment === null) notFound();
+  const bookMeta = meta?.books.find((b) => b.slug === book);
+  if (!meta || !bookMeta || fragment === null) notFound();
+  const { basePath } = DIRECTIONS[direction];
 
   return (
     <>
       <Sidebar
-        basePath={DIRECTIONS[direction].basePath}
+        basePath={basePath}
         sourceShortId={meta.shortId}
         sourceTitle={meta.title}
         books={meta.books}
@@ -144,6 +149,16 @@ export function BookView({
         activeBookSlug={book}
       />
       <main id="main">
+        <PageHeader
+          crumb={{ href: `${basePath}/${meta.shortId}/`, label: meta.title }}
+          title={bookMeta.title}
+          stats={[
+            meta.author,
+            COPY[direction].tab,
+            n(bookMeta.passages, "passage"),
+            n(bookMeta.total, "citation"),
+          ]}
+        />
         <CitationFilter targetId="citation-tree" direction={direction} />
         <div id="citation-tree" dangerouslySetInnerHTML={{ __html: fragment }} />
       </main>
