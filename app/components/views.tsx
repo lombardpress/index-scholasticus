@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import Sidebar from "./Sidebar";
 import CitationInteractions from "./CitationInteractions";
 import CitationFilter from "./CitationFilter";
+import SourceGrid from "./SourceGrid";
 import { DIRECTIONS, getBookFragment, getIndex, getMeta, other, type Direction } from "./data";
 
 const COPY: Record<Direction, { tab: string; crossLink: string }> = {
@@ -54,23 +55,7 @@ export function HomeView({ direction }: { direction: Direction }) {
           {totalPassages.toLocaleString()} passages ·{" "}
           {totalCitations.toLocaleString()} citations
         </div>
-        <div className="source-grid">
-          {sources.map((s) => (
-            <Link key={s.shortId} href={`${basePath}/${s.shortId}`} className="source-card">
-              <div className="source-title">{s.title}</div>
-              {s.author && <div className="source-author">{s.author}</div>}
-              <div className="source-short">{s.shortId}</div>
-              <div className="source-counts">
-                <span>
-                  <b>{s.totalCitations.toLocaleString()}</b> citations
-                </span>
-                <span>
-                  <b>{s.totalPassages.toLocaleString()}</b> passages
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <SourceGrid sources={sources} basePath={basePath} noun={noun} />
       </div>
     </main>
   );

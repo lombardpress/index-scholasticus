@@ -242,3 +242,6 @@ a:hover{text-decoration:underline}
 .home-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .source-card .source-author{font-size:13px;color:var(--text-muted);margin-top:3px}
 .overview-cross{margin:-8px 0 18px;font-size:13px}
+.home-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-12px 0 20px}
+.home-filter-input{flex:1;max-width:420px;font-size:14px;padding:7px 11px}
+.home-empty{color:var(--text-muted);font-size:14px}
