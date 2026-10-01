@@ -1,6 +1,6 @@
 {
   "name": "scta-index-scholasticus",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "build:data": "NODE_OPTIONS=--max-old-space-size=8192 tsx scripts/build-citation-data.ts",
