@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fcites\u002F[work]","\u002Fcites\u002F[work]\u002F[book]","\u002Fsource\u002F[source]","\u002Fsource\u002F[source]\u002F[book]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()
