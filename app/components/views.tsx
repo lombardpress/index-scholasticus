@@ -8,7 +8,16 @@ import Sidebar from "./Sidebar";
 import CitationInteractions from "./CitationInteractions";
 import CitationFilter from "./CitationFilter";
 import SourceGrid from "./SourceGrid";
-import { DIRECTIONS, getBookFragment, getIndex, getMeta, other, type Direction } from "./data";
+import BookToc from "./BookToc";
+import {
+  DIRECTIONS,
+  getBookFragment,
+  getFacets,
+  getIndex,
+  getMeta,
+  other,
+  type Direction,
+} from "./data";
 
 const COPY: Record<Direction, { tab: string; crossLink: string }> = {
   forward: { tab: "Cited sources", crossLink: "Cited by" },
@@ -98,14 +107,12 @@ export function WorkOverview({ direction, work }: { direction: Direction; work: 
               </Link>
             </div>
           )}
-          <div className="book-toc">
-            {meta.books.map((b) => (
-              <Link key={b.slug} href={`${basePath}/${meta.shortId}/${b.slug}`}>
-                <span className="toc-title">{b.title}</span>
-                <span className="toc-count">{b.total.toLocaleString()}</span>
-              </Link>
-            ))}
-          </div>
+          <BookToc
+            direction={direction}
+            bookBase={`${basePath}/${meta.shortId}`}
+            books={meta.books}
+            facets={getFacets(direction, work)}
+          />
         </div>
       </main>
     </>

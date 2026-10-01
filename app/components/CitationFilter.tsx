@@ -107,7 +107,7 @@ function applyFilter(
 
 // In the reverse index the "author" level holds the cited source and the
 // "work" level the cited book, so only the wording changes.
-const LABELS = {
+export const LABELS = {
   forward: { author: "by author…", work: "by work title…", authorAria: "Filter by citing author", workAria: "Filter by citing work title" },
   reverse: { author: "by cited source…", work: "by cited book…", authorAria: "Filter by cited source", workAria: "Filter by cited book or division" },
 };
@@ -123,6 +123,24 @@ export default function CitationFilter({
   const [author, setAuthor] = useState("");
   const [work, setWork] = useState("");
   const [count, setCount] = useState<number | null>(null);
+
+  // The overview page links here with ?author=…&work=… prefilled; read them
+  // once on mount (a static export can't read search params at build time).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setAuthor(params.get("author") || "");
+    setWork(params.get("work") || "");
+  }, []);
+
+  // Keep the URL in sync so a filtered view can be reloaded or shared.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const set = (k: string, v: string) =>
+      v.trim() ? url.searchParams.set(k, v.trim()) : url.searchParams.delete(k);
+    set("author", author);
+    set("work", work);
+    if (url.href !== window.location.href) window.history.replaceState(null, "", url.href);
+  }, [author, work]);
 
   useEffect(() => {
     const tree = document.getElementById(targetId);

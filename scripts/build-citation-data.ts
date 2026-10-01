@@ -3,7 +3,8 @@
  *
  * Faithful Node/TS port of scta-scikit/examples/citation_list_to_html.py.
  * Reads the full citation_index.json (~110 MB) and emits, per top-level work, a
- * <shortId>.meta.json plus one pre-rendered HTML fragment per book, and an
+ * <shortId>.meta.json, a <shortId>.facets.json (per-book author/work counts for
+ * the overview filter), one pre-rendered HTML fragment per book, and an
  * index.json describing every work (for the home page + sidebar totals). It
  * does this twice: forward (cited source → citing texts) into
  * app/data/citations/, and reversed (citing work → cited passages) into
@@ -290,6 +291,58 @@ function countCiteNode(node: CiteTrieNode): number {
   return node.paras.length + node.children.reduce((s, c) => s + countCiteNode(c), 0);
 }
 
+// ── Facets (overview-page filter) ─────────────────────────────────────────────
+
+// Citation counts per (book, author, work) for a whole source, so the overview
+// page can filter its book list by author/work without loading every book's
+// tree. Strings are interned to keep the file small:
+//   { authors: string[], works: string[], rows: [book, author, work, count][] }
+interface Facets {
+  authors: string[];
+  works: string[];
+  rows: [number, number, number, number][];
+}
+
+function forEachLeaf(node: { paras: Leaf[]; children: CitationTrieNode[] }, fn: (l: Leaf) => void) {
+  node.paras.forEach(fn);
+  node.children.forEach((c) => forEachLeaf(c, fn));
+}
+
+function buildFacets(books: Book[]): Facets {
+  const authors: string[] = [];
+  const works: string[] = [];
+  const authorIdx = new Map<string, number>();
+  const workIdx = new Map<string, number>();
+  const intern = (m: Map<string, number>, list: string[], v: string) => {
+    let i = m.get(v);
+    if (i === undefined) {
+      i = list.length;
+      list.push(v);
+      m.set(v, i);
+    }
+    return i;
+  };
+
+  const rows: [number, number, number, number][] = [];
+  books.forEach((book, bi) => {
+    const counts = new Map<string, number>();
+    forEachLeaf(book, (leaf) => {
+      for (const g of leaf.groups) {
+        const a = intern(authorIdx, authors, g.author);
+        for (const w of g.works) {
+          const key = `${a}|${intern(workIdx, works, w.title)}`;
+          counts.set(key, (counts.get(key) || 0) + w.count);
+        }
+      }
+    });
+    for (const [key, n] of counts) {
+      const [a, w] = key.split("|").map(Number);
+      rows.push([bi, a, w, n]);
+    }
+  });
+  return { authors, works, rows };
+}
+
 // ── HTML string renderers (ports of HTML_POST) ────────────────────────────────
 // Emit the exact compact markup the original tool produced. Building the tree as
 // a plain HTML string (rather than a React server-component tree) keeps the
@@ -534,6 +587,7 @@ function emitIndex(citationIndex: Record<string, Entry>, direction: Direction): 
       books: bookMetas.map(({ slug, id, title: bt, total }) => ({ slug, id, title: bt, total })),
     };
     fs.writeFileSync(path.join(outDir, `${shortId}.meta.json`), JSON.stringify(meta));
+    fs.writeFileSync(path.join(outDir, `${shortId}.facets.json`), JSON.stringify(buildFacets(books)));
 
     index.push({ id: srcId, shortId, title, author, totalPassages, totalCitations });
   }

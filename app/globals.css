@@ -245,3 +245,4 @@ a:hover{text-decoration:underline}
 .home-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-12px 0 20px}
 .home-filter-input{flex:1;max-width:420px;font-size:14px;padding:7px 11px}
 .home-empty{color:var(--text-muted);font-size:14px}
+.toc-filter{margin:0 -32px 18px;padding-left:32px;padding-right:32px}

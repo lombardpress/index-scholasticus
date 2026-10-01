@@ -57,6 +57,14 @@ export interface BookMeta {
   total: number;
 }
 
+// Per-book citation counts by (author, work), for the overview-page filter.
+// rows: [bookIndex, authorIndex, workIndex, citationCount]
+export interface Facets {
+  authors: string[];
+  works: string[];
+  rows: [number, number, number, number][];
+}
+
 export interface SourceMeta extends SourceIndexEntry {
   books: BookMeta[];
 }

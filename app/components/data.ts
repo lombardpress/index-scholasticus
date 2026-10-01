@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import path from "path";
-import type { SourceIndexEntry, SourceMeta } from "./types";
+import type { Facets, SourceIndexEntry, SourceMeta } from "./types";
 
 export type Direction = "forward" | "reverse";
 
@@ -33,6 +33,16 @@ export function getMeta(direction: Direction, work: string): SourceMeta | null {
     const p = path.join(DIRECTIONS[direction].dir, `${work}.meta.json`);
     if (!fs.existsSync(p)) return null;
     return JSON.parse(fs.readFileSync(p, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+export function getFacets(direction: Direction, work: string): Facets | null {
+  try {
+    return JSON.parse(
+      fs.readFileSync(path.join(DIRECTIONS[direction].dir, `${work}.facets.json`), "utf-8")
+    );
   } catch {
     return null;
   }
