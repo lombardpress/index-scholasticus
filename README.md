@@ -15,7 +15,9 @@ fast, pre-rendered site.
   Python transform. Reads the full `citation_index.json` (~110 MB), groups
   entries by top-level source, builds the nested tries, and emits per-source data
   into `app/data/citations/` (git-ignored build artifact):
-  - TODO: note that citation_index.json still has to be updated and manually triggered in scta-scikit before the rest of this app will update.
+  - `citation_index.json` comes from scta-scikit (`scta update build`, or
+    `scta update citation_exports` on its own); regenerate it there before
+    rebuilding this app's data.
   - `index.json` — every source + totals (home page).
   - `<source>.meta.json` — source title, totals, and its book list (sidebar/TOC).
   - `<source>/<book>.html` — a pre-rendered, compact HTML fragment **per book**.
@@ -96,7 +98,7 @@ resolving.
 ```bash
 npm install
 
-# Regenerate the data (defaults to ../scta-scikit/examples/citation_index.json;
+# Regenerate the data (defaults to ../scta-scikit/data/citation_index.json;
 # override with an arg or the CITATION_INDEX env var). Needs a large heap.
 npm run build:data
 
